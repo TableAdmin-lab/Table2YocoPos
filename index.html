@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Table by Yoco to Yoco POS Converter</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      if (saved === "dark" || saved === "light") {
+        document.documentElement.setAttribute("data-theme", saved);
+      }
+    })();
+  </script>
+</head>
+
+<body>
+  <main class="app-shell">
+    <section class="workspace" aria-labelledby="page-title">
+      <header class="page-header">
+        <div class="title-block">
+          <img class="brand-logo" src="assets/logos/yoco-wordmark.svg" alt="Yoco" />
+          <p class="eyebrow">Conversion tool</p>
+          <h1 id="page-title">Move Table products into Yoco POS</h1>
+          <p class="page-summary">Upload product, site, modifier, and optional UOM files, then download clean POS-ready
+            lists.</p>
+        </div>
+        <div class="header-actions">
+          <button class="icon-button" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+            <span aria-hidden="true" class="theme-icon theme-icon-sun">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M12 4.5a1 1 0 0 1-1-1V2a1 1 0 0 1 2 0v1.5a1 1 0 0 1-1 1Zm0 15a1 1 0 0 1 1 1V22a1 1 0 0 1-2 0v-1.5a1 1 0 0 1 1-1ZM4.5 12a1 1 0 0 1-1 1H2a1 1 0 0 1 0-2h1.5a1 1 0 0 1 1 1Zm17 0a1 1 0 0 1-1 1h-1.5a1 1 0 0 1 0-2H20.5a1 1 0 0 1 1 1ZM6.34 7.76a1 1 0 0 1-1.41 0L3.87 6.7a1 1 0 1 1 1.41-1.41l1.06 1.06a1 1 0 0 1 0 1.41Zm11.32 11.32a1 1 0 0 1-1.41 0l-1.06-1.06a1 1 0 1 1 1.41-1.41l1.06 1.06a1 1 0 0 1 0 1.41Zm0-11.32a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0ZM6.34 19.08a1 1 0 0 1 0-1.41l1.06-1.06a1 1 0 1 1 1.41 1.41l-1.06 1.06a1 1 0 0 1-1.41 0ZM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" />
+              </svg>
+            </span>
+            <span aria-hidden="true" class="theme-icon theme-icon-moon">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M20.9 14.6A9 9 0 1 1 9.4 3.1a1 1 0 0 1 1.1 1.5A7 7 0 0 0 19.4 13.5a1 1 0 0 1 1.5 1.1Z" />
+              </svg>
+            </span>
+          </button>
+          <button class="ghost-button danger-button" id="clear-all" type="button" aria-label="Clear all uploaded files">
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 12H7L6 9Zm3 2v8h2v-8H9Zm4 0v8h2v-8h-2Z" />
+              </svg>
+            </span>
+            Clear all
+          </button>
+          <button class="ghost-button" id="load-sample" type="button" aria-label="Load sample CSV data">
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+              </svg>
+            </span>
+            Load sample
+          </button>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <span class="step-badge">1</span>
+          <div>
+            <h2>Add your required files</h2>
+            <p>Start with Products - Update, then add Site Settings, Modifier Items, and optional Custom UOMs.</p>
+          </div>
+        </div>
+
+        <div class="upload-grid">
+          <div class="file-drop-wrap">
+            <label class="file-drop">
+              <input id="products-file" type="file" accept=".xlsx,.xls,.csv,text/csv" />
+              <span class="file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path
+                    d="M13 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9l-6-6Zm0 2.8L16.2 9H13V5.8ZM8 13h8v2H8v-2Zm0 4h6v2H8v-2Z" />
+                </svg>
+              </span>
+              <span>Products - Update</span>
+              <small id="products-file-name">Required product workbook</small>
+            </label>
+            <button class="video-trigger" type="button" aria-label="Watch Products - Update tutorial"
+              data-video-id="1t_Vtleoz7AhU4DV8O9AhsqJbBMy39KW9">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="file-drop-wrap">
+            <label class="file-drop">
+              <input id="site-settings-file" type="file" accept=".xlsx,.xls,.csv,text/csv" />
+              <span class="file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 2h8v2H8V8Zm0 4h8v2H8v-2Zm0 4h5v2H8v-2Z" />
+                </svg>
+              </span>
+              <span>Site Settings</span>
+              <small id="site-settings-file-name">Required workbook for all sites</small>
+            </label>
+            <button class="video-trigger" type="button" aria-label="Watch Site Settings tutorial"
+              data-video-id="1Ba6teIDojQ73RUwMQPd5Ij1zUm_9ZzIY">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="file-drop-wrap">
+            <label class="file-drop">
+              <input id="modifiers-file" type="file" accept=".xlsx,.xls,.csv,text/csv" />
+              <span class="file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M4 5h16v4H4V5Zm2 2v0h12V7H6Zm-2 6h7v6H4v-6Zm2 2v2h3v-2H6Zm7-2h7v6h-7v-6Zm2 2v2h3v-2h-3Z" />
+                </svg>
+              </span>
+              <span>Modifier Items</span>
+              <small id="modifiers-file-name">Required modifier workbook</small>
+            </label>
+            <button class="video-trigger" type="button" aria-label="Watch Modifier Items tutorial"
+              data-video-id="16fY40ioH5w_kkmTVeUEkUsS2L_ZID2hn">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="file-drop-wrap">
+            <label class="file-drop optional-drop">
+              <input id="uom-file" type="file" accept=".xlsx,.xls,.csv,text/csv" />
+              <span class="file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M3 7h18v10H3V7Zm2 2v6h14V9H5Zm2 1h2v4H7v-4Zm4 0h2v4h-2v-4Zm4 0h2v4h-2v-4Z" />
+                </svg>
+              </span>
+              <span>Custom UOMs</span>
+              <small id="uom-file-name">Optional inventory workbook</small>
+            </label>
+            <button class="video-trigger" type="button" aria-label="Watch Custom UOMs tutorial"
+              data-video-id="1ibka0l3M1Q0t4fvwWyYCVWtl9GWBZu8-">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="file-drop-wrap">
+            <label class="file-drop optional-drop">
+              <input id="recipe-file" type="file" accept=".xlsx,.xls,.csv,text/csv" />
+              <span class="file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path
+                    d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm8 1.5V9h4.5L14 4.5ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Zm0-8h4v2H8V9Z" />
+                </svg>
+              </span>
+              <span>Recipe</span>
+              <small id="recipe-file-name">Optional recipe workbook</small>
+            </label>
+            <button class="video-trigger" type="button" aria-label="Watch Recipe tutorial"
+              data-video-id="1zJCaero_lMSxztAbtLrnZ1v5tNwVxOPW">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5v14l11-7Z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="convert-row">
+          <button id="convert-button" type="button">
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M12 3a9 9 0 1 0 8.95 8H19a7 7 0 1 1-2.05-4.95L14 9h7V2l-2.6 2.6A8.96 8.96 0 0 0 12 3Zm-1 5v5l4.2 2.5 1-1.7-3.2-1.9V8h-2Z" />
+              </svg>
+            </span>
+            Convert
+          </button>
+        </div>
+      </section>
+
+      <section class="panel action-panel">
+        <div class="action-copy">
+          <div class="panel-heading compact">
+            <span class="step-badge">2</span>
+            <h2>Convert and download</h2>
+          </div>
+          <p id="status-text">Waiting for CSV data.</p>
+        </div>
+        <div class="button-row">
+          <button id="download-inventory-button" type="button" disabled>
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M11 4h2v8l3.5-3.5 1.4 1.4L12 15.8 6.1 9.9l1.4-1.4L11 12V4ZM5 19h14v-4h2v6H3v-6h2v4Z" />
+              </svg>
+            </span>
+            Download inventory items
+          </button>
+          <button id="download-recipe-button" type="button" disabled>
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M11 4h2v8l3.5-3.5 1.4 1.4L12 15.8 6.1 9.9l1.4-1.4L11 12V4ZM5 19h14v-4h2v6H3v-6h2v4Z" />
+              </svg>
+            </span>
+            Download recipe
+          </button>
+          <button id="download-yoco-export-button" type="button" disabled>
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M6 3h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm8 1.5V9h4.5L14 4.5ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Zm0-8h4v2H8V9Z" />
+              </svg>
+            </span>
+            Yoco POS Export
+          </button>
+        </div>
+      </section>
+
+      <section class="panel preview-panel">
+        <div class="panel-heading">
+          <span class="step-badge neutral">3</span>
+          <div>
+            <h2>Preview</h2>
+            <p id="preview-description">Finished goods only.</p>
+          </div>
+        </div>
+
+        <div class="preview-toolbar" role="tablist" aria-label="Preview list">
+          <button id="show-products-button" class="toggle-button active" type="button" role="tab" aria-selected="true"
+            aria-controls="products-preview">
+            Product list
+          </button>
+          <button id="show-inventory-button" class="toggle-button" type="button" role="tab" aria-selected="false"
+            aria-controls="inventory-preview">
+            Inventory list
+          </button>
+          <button id="show-modifiers-button" class="toggle-button" type="button" role="tab" aria-selected="false"
+            aria-controls="modifiers-preview">
+            Modifier list
+          </button>
+          <button id="show-recipe-button" class="toggle-button" type="button" role="tab" aria-selected="false"
+            aria-controls="recipe-preview">
+            Recipe list
+          </button>
+        </div>
+
+        <div id="products-preview" class="preview-view active" role="tabpanel" aria-labelledby="show-products-button">
+          <div class="table-wrap">
+            <table id="products-preview-table" class="products-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="inventory-preview" class="preview-view" role="tabpanel" aria-labelledby="show-inventory-button" hidden>
+          <div class="table-wrap">
+            <table id="inventory-preview-table" class="inventory-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="modifiers-preview" class="preview-view" role="tabpanel" aria-labelledby="show-modifiers-button" hidden>
+          <div class="table-wrap">
+            <table id="modifiers-preview-table" class="modifiers-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="recipe-preview" class="preview-view" role="tabpanel" aria-labelledby="show-recipe-button" hidden>
+          <div class="table-wrap">
+            <table id="recipe-preview-table" class="recipe-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pagination-bar">
+          <div class="pagination-rows">
+            <label for="rows-per-page">Rows per page</label>
+            <select id="rows-per-page">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div class="pagination-controls">
+            <button id="prev-page-button" class="toggle-button" type="button" disabled>Prev</button>
+            <span id="pagination-indicator">Page 1 of 1</span>
+            <button id="next-page-button" class="toggle-button" type="button" disabled>Next</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="video-popover" class="video-popover" hidden>
+    <iframe id="video-popover-frame" title="Tutorial preview" allow="autoplay" frameborder="0"></iframe>
+  </div>
+
+  <div id="video-modal" class="video-modal" hidden>
+    <div class="video-modal-backdrop" id="video-modal-backdrop"></div>
+    <div class="video-modal-panel">
+      <button class="video-modal-close" id="video-modal-close" type="button" aria-label="Close video">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6L19 6.4 17.6 5 12 10.6Z" />
+        </svg>
+      </button>
+      <iframe id="video-modal-frame" title="Tutorial video" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
