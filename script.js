@@ -116,6 +116,7 @@ const statusText = document.querySelector("#status-text");
 const convertButton = document.querySelector("#convert-button");
 const downloadInventoryButton = document.querySelector("#download-inventory-button");
 const downloadRecipeButton = document.querySelector("#download-recipe-button");
+const downloadManufacturedRecipeButton = document.querySelector("#download-manufactured-recipe-button");
 const downloadYocoExportButton = document.querySelector("#download-yoco-export-button");
 const productsPreviewHead = document.querySelector("#products-preview-table thead");
 const productsPreviewBody = document.querySelector("#products-preview-table tbody");
@@ -125,16 +126,20 @@ const modifiersPreviewHead = document.querySelector("#modifiers-preview-table th
 const modifiersPreviewBody = document.querySelector("#modifiers-preview-table tbody");
 const recipePreviewHead = document.querySelector("#recipe-preview-table thead");
 const recipePreviewBody = document.querySelector("#recipe-preview-table tbody");
+const manufacturedRecipePreviewHead = document.querySelector("#manufactured-recipe-preview-table thead");
+const manufacturedRecipePreviewBody = document.querySelector("#manufactured-recipe-preview-table tbody");
 const previewDescription = document.querySelector("#preview-description");
 const showProductsButton = document.querySelector("#show-products-button");
 const showInventoryButton = document.querySelector("#show-inventory-button");
 const showModifiersButton = document.querySelector("#show-modifiers-button");
 const showRecipeButton = document.querySelector("#show-recipe-button");
+const showManufacturedRecipeButton = document.querySelector("#show-manufactured-recipe-button");
 const productsPreview = document.querySelector("#products-preview");
 const inventoryPreview = document.querySelector("#inventory-preview");
 const modifiersPreview = document.querySelector("#modifiers-preview");
 const recipePreview = document.querySelector("#recipe-preview");
-const loadSampleButton = document.querySelector("#load-sample");
+const manufacturedRecipePreview = document.querySelector("#manufactured-recipe-preview");
+
 const rowsPerPageSelect = document.querySelector("#rows-per-page");
 const prevPageButton = document.querySelector("#prev-page-button");
 const nextPageButton = document.querySelector("#next-page-button");
@@ -152,6 +157,8 @@ let inventoryPreviewRows = [];
 let convertedModifiers = [];
 let convertedRecipes = [];
 let convertedRecipeExport = [];
+let convertedManufacturedRecipes = [];
+let convertedManufacturedRecipeExport = [];
 let productOutputHeaders = [...productHeadersBase];
 let inventoryOutputHeaders = [...inventoryHeadersBase];
 let inventoryPreviewHeaders = buildInventoryPreviewHeaders(0);
@@ -421,16 +428,22 @@ function loadRecipeRows(rows) {
     return;
   }
 
-  convertedRecipes = convertRecipeRows();
-  convertedRecipeExport = convertRecipeExportRows();
+  convertedRecipes = convertRecipeRows(false);
+  convertedRecipeExport = convertRecipeExportRows(false);
+  convertedManufacturedRecipes = convertRecipeRows(true);
+  convertedManufacturedRecipeExport = convertRecipeExportRows(true);
   paginationPages.recipe = 1;
+  paginationPages.manufacturedRecipe = 1;
   renderPreviewTable("recipe");
+  renderPreviewTable("manufacturedRecipe");
   downloadRecipeButton.disabled = convertedRecipes.length === 0;
+  downloadManufacturedRecipeButton.disabled = convertedManufacturedRecipes.length === 0;
   downloadYocoExportButton.disabled =
     convertedProducts.length === 0 &&
     convertedModifiers.length === 0 &&
     convertedInventoryItems.length === 0 &&
-    convertedRecipeExport.length === 0;
+    convertedRecipeExport.length === 0 &&
+    convertedManufacturedRecipeExport.length === 0;
   setStatus(`${recipeRows.length} recipe row${recipeRows.length === 1 ? "" : "s"} loaded.`);
 }
 
@@ -457,9 +470,13 @@ function formatMasterProductName(value) {
   return `${name} - ${values.join(" / ")}`;
 }
 
-function convertRecipeRows() {
+function convertRecipeRows(isManufactured) {
   return recipeRows
     .filter((row) => getField(row, ["Master Product Name"]) && getField(row, ["Recipe Product Name"]))
+    .filter((row) => {
+      const pType = String(getField(row, ["Product Type"]) || "").trim();
+      return isManufactured ? pType.toLowerCase() === "preparation" : pType.toLowerCase() !== "preparation";
+    })
     .map((row) => [
       getField(row, ["Master Product PLU"]),
       getField(row, ["Product Type"]),
@@ -471,11 +488,15 @@ function convertRecipeRows() {
     ]);
 }
 
-function convertRecipeExportRows() {
+function convertRecipeExportRows(isManufactured) {
   return recipeRows
     .filter((row) => getField(row, ["Master Product Name"]) && getField(row, ["Recipe Product Name"]))
+    .filter((row) => {
+      const pType = String(getField(row, ["Product Type"]) || "").trim();
+      return isManufactured ? pType.toLowerCase() === "preparation" : pType.toLowerCase() !== "preparation";
+    })
     .map((row) => [
-      getField(row, ["Master Product Name"]),
+      formatMasterProductName(getField(row, ["Master Product Name"])),
       getField(row, ["Recipe Product Name"]),
       getField(row, ["Unit of Measure"]),
       String(getField(row, ["Quantity"]) || "").trim(),
@@ -642,7 +663,11 @@ function convertRows() {
       const uom = getField(site, ["Selling UOM", "UOM"]) || getField(product.row, ["Selling UOM", "UOM"]);
       const menuCategory =
         getField(site, ["Menu Category", "Menu Categories"]) || getField(product.row, ["Menu Categories", "Menu Category"]);
-      const sellingPrice = cleanNumber(getField(site, ["Selling Price"]));
+      const sellingPrices = product.sites
+        .map((s) => cleanNumber(getField(s, ["Selling Price"])))
+        .filter((p) => p !== "")
+        .map(Number);
+      const sellingPrice = sellingPrices.length > 0 ? Math.max(...sellingPrices).toFixed(2) : "";
       const costPrice = cleanNumber(getField(site, ["Cost Price"]));
       const siteName = getField(site, ["Site", "Site Name"]);
       const barcode = getField(product.row, ["Barcode"]);
@@ -695,7 +720,11 @@ function convertRows() {
     const uom = getField(site, ["Selling UOM", "UOM"]) || getField(product.row, ["Selling UOM", "UOM"]);
     const menuCategory =
       getField(site, ["Menu Category", "Menu Categories"]) || getField(product.row, ["Menu Categories", "Menu Category"]);
-    const sellingPrice = cleanNumber(getField(site, ["Selling Price"]));
+    const sellingPrices = product.sites
+      .map((s) => cleanNumber(getField(s, ["Selling Price"])))
+      .filter((p) => p !== "")
+      .map(Number);
+    const sellingPrice = sellingPrices.length > 0 ? Math.max(...sellingPrices).toFixed(2) : "";
     const costPrice = cleanNumber(getField(site, ["Cost Price"]));
     const productType = getField(product.row, ["Product Type"]);
     const itemType = mapItemType(inventoryType, productType);
@@ -742,7 +771,7 @@ function convertRows() {
   renderPreviewTable("modifiers");
   downloadInventoryButton.disabled = convertedInventoryItems.length === 0;
   downloadYocoExportButton.disabled =
-    convertedProducts.length === 0 && convertedModifiers.length === 0 && convertedInventoryItems.length === 0;
+    convertedProducts.length === 0 && convertedModifiers.length === 0 && convertedInventoryItems.length === 0 && convertedRecipeExport.length === 0 && convertedManufacturedRecipeExport.length === 0;
   setStatus(
     `${convertedProducts.length} product row${convertedProducts.length === 1 ? "" : "s"}, ${convertedInventoryItems.length} inventory item row${convertedInventoryItems.length === 1 ? "" : "s"}, and ${convertedModifiers.length} modifier row${convertedModifiers.length === 1 ? "" : "s"} converted.`,
   );
@@ -816,7 +845,7 @@ function renderTable(headElement, bodyElement, headers, rows, emptyMessage) {
 
 let currentPreviewType = "products";
 let rowsPerPage = 20;
-const paginationPages = { products: 1, inventory: 1, modifiers: 1, recipe: 1 };
+const paginationPages = { products: 1, inventory: 1, modifiers: 1, recipe: 1, manufacturedRecipe: 1 };
 
 function getPreviewDataset(type) {
   switch (type) {
@@ -852,6 +881,14 @@ function getPreviewDataset(type) {
         rows: convertedRecipes,
         emptyMessage: "No converted recipe rows yet.",
       };
+    case "manufacturedRecipe":
+      return {
+        head: manufacturedRecipePreviewHead,
+        body: manufacturedRecipePreviewBody,
+        headers: recipeHeaders,
+        rows: convertedManufacturedRecipes,
+        emptyMessage: "No converted manufactured recipe rows yet.",
+      };
     default:
       return null;
   }
@@ -880,7 +917,7 @@ function renderPreviewTable(type) {
 }
 
 function renderAllPreviewTables() {
-  ["products", "inventory", "modifiers", "recipe"].forEach(renderPreviewTable);
+  ["products", "inventory", "modifiers", "recipe", "manufacturedRecipe"].forEach(renderPreviewTable);
 }
 
 function downloadCsv(headers, rows, filename) {
@@ -908,11 +945,13 @@ function downloadYocoExport() {
   const modifierGroupsSheet = XLSX.utils.aoa_to_sheet([modifierHeaders, ...convertedModifiers]);
   const stockImportSheet = XLSX.utils.aoa_to_sheet([inventoryOutputHeaders, ...convertedInventoryItems]);
   const recipeBuilderSheet = XLSX.utils.aoa_to_sheet([recipeExportHeaders, ...convertedRecipeExport]);
+  const manufacturedRecipeBuilderSheet = XLSX.utils.aoa_to_sheet([recipeExportHeaders, ...convertedManufacturedRecipeExport]);
 
   XLSX.utils.book_append_sheet(workbook, productsSheet, "Products");
   XLSX.utils.book_append_sheet(workbook, modifierGroupsSheet, "Modifier_Groups");
   XLSX.utils.book_append_sheet(workbook, stockImportSheet, "Stock_Import");
   XLSX.utils.book_append_sheet(workbook, recipeBuilderSheet, "Recipe Builder");
+  XLSX.utils.book_append_sheet(workbook, manufacturedRecipeBuilderSheet, "Manufactured Recipe Builder");
   XLSX.writeFile(workbook, "yoco-pos-export.xlsx");
 }
 
@@ -924,23 +963,28 @@ function showPreview(type) {
   const showingInventory = type === "inventory";
   const showingModifiers = type === "modifiers";
   const showingRecipe = type === "recipe";
+  const showingManufacturedRecipe = type === "manufacturedRecipe";
 
   productsPreview.hidden = !showingProducts;
   inventoryPreview.hidden = !showingInventory;
   modifiersPreview.hidden = !showingModifiers;
   recipePreview.hidden = !showingRecipe;
+  manufacturedRecipePreview.hidden = !showingManufacturedRecipe;
   productsPreview.classList.toggle("active", showingProducts);
   inventoryPreview.classList.toggle("active", showingInventory);
   modifiersPreview.classList.toggle("active", showingModifiers);
   recipePreview.classList.toggle("active", showingRecipe);
+  manufacturedRecipePreview.classList.toggle("active", showingManufacturedRecipe);
   showProductsButton.classList.toggle("active", showingProducts);
   showInventoryButton.classList.toggle("active", showingInventory);
   showModifiersButton.classList.toggle("active", showingModifiers);
   showRecipeButton.classList.toggle("active", showingRecipe);
+  showManufacturedRecipeButton.classList.toggle("active", showingManufacturedRecipe);
   showProductsButton.setAttribute("aria-selected", String(showingProducts));
   showInventoryButton.setAttribute("aria-selected", String(showingInventory));
   showModifiersButton.setAttribute("aria-selected", String(showingModifiers));
   showRecipeButton.setAttribute("aria-selected", String(showingRecipe));
+  showManufacturedRecipeButton.setAttribute("aria-selected", String(showingManufacturedRecipe));
 
   if (showingProducts) {
     previewDescription.textContent = "Finished goods only.";
@@ -948,8 +992,10 @@ function showPreview(type) {
     previewDescription.textContent = "All other inventory types, including Batch Qty and optional custom UOMs.";
   } else if (showingModifiers) {
     previewDescription.textContent = "Modifier groups, option names, and product-backed quantities.";
-  } else {
+  } else if (showingRecipe) {
     previewDescription.textContent = "Recipe lines with the master product's variant formatted as Name - Value / Value.";
+  } else {
+    previewDescription.textContent = "Manufactured recipe lines.";
   }
 }
 
@@ -1038,72 +1084,19 @@ showProductsButton.addEventListener("click", () => showPreview("products"));
 showInventoryButton.addEventListener("click", () => showPreview("inventory"));
 showModifiersButton.addEventListener("click", () => showPreview("modifiers"));
 showRecipeButton.addEventListener("click", () => showPreview("recipe"));
+showManufacturedRecipeButton.addEventListener("click", () => showPreview("manufacturedRecipe"));
 downloadInventoryButton.addEventListener("click", () => {
   downloadCsv(inventoryOutputHeaders, convertedInventoryItems, "yoco-pos-inventory-items.csv");
 });
 downloadRecipeButton.addEventListener("click", () => {
   downloadCsv(recipeExportHeaders, convertedRecipeExport, "yoco-pos-recipe.csv");
 });
+downloadManufacturedRecipeButton.addEventListener("click", () => {
+  downloadCsv(recipeExportHeaders, convertedManufacturedRecipeExport, "yoco-pos-manufactured-recipe.csv");
+});
 downloadYocoExportButton.addEventListener("click", downloadYocoExport);
 
-loadSampleButton.addEventListener("click", () => {
-  const sampleProducts = [
-    [
-      "Product PLU",
-      "Name",
-      "Variants",
-      "Menu Categories",
-      "Inventory Type",
-      "Product Type",
-      "Batch Qty",
-      "Selling UOM",
-      "Product SKU",
-      "Barcode",
-      "Modifier Group",
-    ],
-    ["PLU-1001", "Flat white", "1.Order Type: Sit Down; 2. Milk: Yes", "Coffee", "finishedGood", "", "", "ea", "COF-FW", "6001001001001", "Milk Type"],
-    ["PLU-1002", "Chicken wrap", "1.Order Type: Take Away; 2. Side: Chips", "Lunch", "finishedGood", "", "", "ea", "LUN-CW", "6001001001002", ""],
-    ["PLU-1003", "Basil pesto", "", "Prep", "rawMaterial", "preparation", "0.7", "l", "PREP-BP", "", ""],
-  ];
 
-  const sampleSiteSettings = [
-    ["Product PLU", "Site", "Selling UOM", "Menu Category", "Cost Price", "Selling Price"],
-    ["PLU-1001", "Cape Town", "ea", "Coffee", "14.50", "34.00"],
-    ["PLU-1001", "Johannesburg", "ea", "Coffee", "14.50", "35.00"],
-    ["PLU-1002", "Cape Town", "ea", "Lunch", "41.20", "89.50"],
-    ["PLU-1003", "Cape Town", "l", "Prep", "235.32", "0"],
-  ];
-
-  const sampleModifiers = [
-    ["Modifier Name", "Type (Products / Options)", "Modifier Option Name", "Modifier Product Name", "Quantity (Product Modifier)", "UOM (Product Modifier)"],
-    ["Milk Type", "products", "(RAW) Milk", "(RAW) Milk", "0.05", "l"],
-    ["Milk Type", "products", "(RAW) Oat Milk", "(RAW) Oat Milk", "0.05", "l"],
-    ["Egg Type", "options", "Soft Egg", "", "1", ""],
-  ];
-
-  const sampleUoms = [
-    ["Product PLU", "Base UOM", "UOM Title", "Unit Size"],
-    ["PLU-1003", "l", "5L", "5"],
-    ["PLU-1003", "l", "500ml Bottle", "0.5"],
-  ];
-
-  const sampleRecipe = [
-    ["Master Product PLU", "Product Type", "Master Product Name", "Recipe Product PLU", "Recipe Product Name", "Unit of Measure", "Quantity"],
-    ["rlssdmbhff", "Composite", "AMERICANO - 1.Order Type: Take Away, 2. Milk: Yes", "PLU-RAW-1040", "(RAW) Rock n Rolla Coffee", "kg", "0.018"],
-    ["wdbksbcnkq", "Composite", "AMERICANO - 1.Order Type: Sit Down, 2. Milk: Yes", "PLU-RAW-1040", "(RAW) Rock n Rolla Coffee", "kg", "0.018"],
-  ];
-
-  productsFileName.textContent = "Sample Products - Update";
-  siteSettingsFileName.textContent = "Sample Site Settings";
-  modifiersFileName.textContent = "Sample Modifier Items";
-  uomFileName.textContent = "Sample Custom UOMs";
-  recipeFileName.textContent = "Sample Recipe";
-  loadProductsRows(sampleProducts);
-  loadSiteSettingsRows(sampleSiteSettings);
-  loadModifierRows(sampleModifiers);
-  loadUomRows(sampleUoms);
-  loadRecipeRows(sampleRecipe);
-});
 
 function clearAll() {
   productRows = [];

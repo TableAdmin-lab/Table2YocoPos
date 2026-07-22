@@ -49,14 +49,7 @@
             </span>
             Clear all
           </button>
-          <button class="ghost-button" id="load-sample" type="button" aria-label="Load sample CSV data">
-            <span aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
-              </svg>
-            </span>
-            Load sample
-          </button>
+
         </div>
       </header>
 
@@ -206,6 +199,14 @@
             </span>
             Download recipe
           </button>
+          <button id="download-manufactured-recipe-button" type="button" disabled>
+            <span aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M11 4h2v8l3.5-3.5 1.4 1.4L12 15.8 6.1 9.9l1.4-1.4L11 12V4ZM5 19h14v-4h2v6H3v-6h2v4Z" />
+              </svg>
+            </span>
+            Download manufactured recipe
+          </button>
           <button id="download-yoco-export-button" type="button" disabled>
             <span aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
@@ -244,6 +245,10 @@
             aria-controls="recipe-preview">
             Recipe list
           </button>
+          <button id="show-manufactured-recipe-button" class="toggle-button" type="button" role="tab" aria-selected="false"
+            aria-controls="manufactured-recipe-preview">
+            Manufactured recipes
+          </button>
         </div>
 
         <div id="products-preview" class="preview-view active" role="tabpanel" aria-labelledby="show-products-button">
@@ -276,6 +281,15 @@
         <div id="recipe-preview" class="preview-view" role="tabpanel" aria-labelledby="show-recipe-button" hidden>
           <div class="table-wrap">
             <table id="recipe-preview-table" class="recipe-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="manufactured-recipe-preview" class="preview-view" role="tabpanel" aria-labelledby="show-manufactured-recipe-button" hidden>
+          <div class="table-wrap">
+            <table id="manufactured-recipe-preview-table" class="recipe-table">
               <thead></thead>
               <tbody></tbody>
             </table>
